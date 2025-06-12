@@ -11,21 +11,43 @@ const News = (props) => {
 
   const updateNews = async () => {
     props.setProgress(10);
-    const url = `https://gnews.io/api/v4/top-headlines?lang=en&topic=${props.category}&token=${process.env.REACT_APP_GNEWS_API_KEY}&max=${props.pageSize}&page=${page}`;
+    const apikey = process.env.REACT_APP_CURRENTS_API_KEY;
+
+    const url = `https://api.currentsapi.services/v1/latest-news?apiKey=${apikey}&category=${props.category}`;
     setLoading(true);
-    const data = await fetch(url);
-    props.setProgress(30);
-    const parsedData = await data.json();
-    props.setProgress(70);
-    setArticles(parsedData.articles || []);
-    setTotalResults(parsedData.totalArticles || 0);
-    setLoading(false);
-    props.setProgress(100);
+
+    try {
+      const response = await fetch(url);
+      props.setProgress(30);
+      const parsedData = await response.json();
+      props.setProgress(70);
+
+      const safeArticles = Array.isArray(parsedData.news) ? parsedData.news : [];
+      localStorage.setItem(`news_${props.category}`, JSON.stringify(safeArticles));
+      setArticles(safeArticles);
+      setTotalResults(safeArticles.length);
+      setLoading(false);
+      props.setProgress(100);
+    } catch (error) {
+      console.error("Currents API error:", error);
+      setLoading(false);
+    }
   };
 
+
+
   useEffect(() => {
-    updateNews();
-  }, [page, props.category]);
+    const cached = localStorage.getItem(`news_${props.category}`);
+    if (cached) {
+      setArticles(JSON.parse(cached));
+      setLoading(false);
+      setTotalResults(JSON.parse(cached).length);
+      console.log("📦 Loaded from cache:", props.category);
+    } else {
+      updateNews(); // fetch from API if no cache
+    }
+  }, [props.category]);
+
 
   const prevPg = () => {
     if (page > 1) setPage(page - 1);
@@ -43,16 +65,18 @@ const News = (props) => {
         <h2>Headlines</h2>
         {loading && <Loading />}
         <div className="row">
-          {articles.map((element) => (
-            <div className="col-md-4" key={element.url}>
-              <NewsItems
-                title={element.title ? element.title.slice(0, 50) : ""}
-                description={element.description ? element.description.slice(0, 50) : ""}
-                imgUrl={element.image}
-                newsUrl={element.url}
-              />
-            </div>
-          ))}
+          {articles
+            .slice((page - 1) * props.pageSize, page * props.pageSize)
+            .map((element) => (
+              <div className="col-md-4" key={element.url || element.title}>
+                <NewsItems
+                  title={element.title ? element.title.slice(0, 50) : ""}
+                  description={element.description ? element.description.slice(0, 50) : ""}
+                  imgUrl={element.image}
+                  newsUrl={element.url}
+                />
+              </div>
+            ))}
         </div>
         <div className="container d-flex justify-content-between my-3">
           <button
@@ -65,7 +89,7 @@ const News = (props) => {
           </button>
           <button
             type="button"
-            disabled={page >= Math.ceil(totalResults / props.pageSize)}
+            disabled={page >= Math.ceil(articles.length / props.pageSize)}
             onClick={nxtPg}
             className="btn btn-dark"
           >

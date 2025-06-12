@@ -26,7 +26,7 @@ const App = ()=> {
       />
 
           <Routes>
-            <Route exact path="/" element={<News setProgress={setProgress}  country="us" pageSize={12} category="general" key="nation" />} />
+            <Route exact path="/" element={<News setProgress={setProgress}  country="us" pageSize={12} category="top" key="world" />} />
             <Route exact path="/business" element={<News setProgress={setProgress}  country="us" pageSize={12} category="business" key="business" />} />
             <Route exact path="/entertainment" element={<News setProgress={setProgress}  country="us" pageSize={12} category="entertainment" key="entertainment" />} />
             <Route exact path="/health" element={<News setProgress={setProgress}  country="us" pageSize={12} category="health" key="health" />} />
