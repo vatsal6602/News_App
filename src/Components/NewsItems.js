@@ -2,11 +2,17 @@ import React from 'react';
 
 const NewsItems = (props) => {
   let { title, description, imgUrl, newsUrl } = props;
+  const defaultImage = "/noimg.png";
+
   return (
     <div>
       <div className="card h-100 shadow-sm">
         <img
-          src={imgUrl || "https://static01.nyt.com/images/2022/03/22/arts/22latenight/22latenight-facebookJumbo.png"}
+          src={imgUrl && imgUrl.trim() !== "" ? imgUrl : defaultImage}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = defaultImage;
+          }}
           className="card-img-top"
           alt="news"
           style={{ height: '200px', objectFit: 'cover' }}
